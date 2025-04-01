@@ -145,6 +145,15 @@ OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`;
   execSync('cd ' + projectPath + ' && git init && git remote add origin git@github.com:fmfg03/' + projectName + '.git', { stdio: 'inherit' });
   execSync('cd ' + projectPath + ' && git add . && git commit -m "Initial commit with full setup" && git push -u origin main', { stdio: 'inherit' });
 
+  // Ensure the main branch exists
+execSync('cd ' + projectPath + ' && git checkout -b main', { stdio: 'inherit' });
+
+// Add all files and commit
+execSync('cd ' + projectPath + ' && git add . && git commit -m "Initial commit with full setup"', { stdio: 'inherit' });
+
+// Push to GitHub
+execSync('cd ' + projectPath + ' && git push -u origin main', { stdio: 'inherit' });
+
   // Start PM2 dev server and llm-router.js
   const launcher = path.join(__dirname, 'auto-launch-dev.js');
   const cmd = `node "${launcher}" "${projectName}" ${push ? '--push' : ''}`;
