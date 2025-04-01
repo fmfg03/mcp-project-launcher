@@ -5,17 +5,6 @@ const path = require('path');
 const readline = require('readline');
 const { ChatOpenAI } = require('@langchain/openai');
 const { ChatAnthropic } = require('@langchain/anthropic');
-
-// Force-load env BEFORE anything else
-require('dotenv').config({ path: path.join(__dirname, '.env') });
-process.env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim();
-
-console.log("🔐 ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY);
-
-// TEMP: Force-load API key manually
-process.env.ANTHROPIC_API_KEY = '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'; // <-- insert full working key here
-
-
 const { HumanMessage, AIMessage, SystemMessage } = require('@langchain/core/messages');
 
 const configPath = path.join(__dirname, '.mcp.config.json');
@@ -35,7 +24,7 @@ const rl = readline.createInterface({
 });
 
 const agents = {
-  'chatgpt': new ChatOpenAI({ modelName: 'gpt-4o', temperature: 0 }),
+  'gpt-4o': new ChatOpenAI({ modelName: 'gpt-4o', temperature: 0 }),
   'claude-3-sonnet': new ChatAnthropic({ modelName: 'claude-3-sonnet-20240229', temperature: 0.3 })
 };
 
@@ -71,7 +60,7 @@ async function main() {
     const builderReply = await chatWithAgent(builder, history[history.length - 1].content);
     console.log(`👷 ${builder.persona}: ${builderReply}\n`);
 
-    await delay(500); // small pause between turns
+    await delay(500);
 
     const judgeReply = await chatWithAgent(judge, builderReply);
     console.log(`🧑‍⚖️ ${judge.persona}: ${judgeReply}\n`);
