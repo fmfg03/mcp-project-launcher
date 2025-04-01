@@ -1,11 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const axios = require('axios');
 
 const MCP_REPO = 'https://github.com/modelcontextprotocol/servers.git';
 const MCP_FOLDER_NAME = 'mcp-servers';
 const SERVER_FOLDER = 'everything'; // Default server folder
 const projectsDir = path.join(__dirname, '..', 'projects');
+const GITHUB_USER = 'fmfg03';  // Change this to your GitHub username
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;  // Ensure GITHUB_TOKEN is set in your environment
 
 function abort(msg) {
   console.error(`❌ ${msg}`);
@@ -86,6 +89,31 @@ function createMemoryAndAssets(projectPath) {
   fs.writeFileSync(path.join(projectPath, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
 }
 
+// Create GitHub repository via GitHub API
+async function createGitHubRepo(projectName) {
+  const url = 'https://api.github.com/user/repos';
+  const res = await axios.post(
+    url,
+    {
+      name: projectName,
+      private: false,  // Change this to true if you want a private repo
+      auto_init: false,
+    },
+    {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'User-Agent': GITHUB_USER,
+      },
+    }
+  );
+
+  if (res.status === 201) {
+    console.log(`✅ GitHub repo created: ${projectName}`);
+  } else {
+    throw new Error(`GitHub repo creation failed: ${res.status}`);
+  }
+}
+
 (async () => {
   const args = process.argv.slice(2);
   const projectName = args.find(arg => !arg.startsWith('--'));
@@ -141,6 +169,13 @@ function createMemoryAndAssets(projectPath) {
   const envContent = `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}
 OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`;
   fs.writeFileSync(envFilePath, envContent);
+
+  // Automatically create GitHub repo if it doesn't exist
+  try {
+    await createGitHubRepo(projectName);
+  } catch (err) {
+    abort(err.message);
+  }
 
   // Initialize Git repo, create the main branch and push
   console.log('🧹 Resetting git repo...');
