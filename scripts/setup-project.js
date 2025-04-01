@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 
 const MCP_REPO = 'https://github.com/modelcontextprotocol/servers.git';
 const MCP_FOLDER_NAME = 'mcp-servers';
-const SERVER_FOLDER = 'everything'; // locked-in default
+const SERVER_FOLDER = 'everything'; // Default server folder
 const projectsDir = path.join(__dirname, '..', 'projects');
 
 function abort(msg) {
@@ -126,9 +126,6 @@ function createMemoryAndAssets(destPath) {
 
   // Add .env to .gitignore to protect API keys
   const gitignorePath = path.join(projectPath, '.gitignore');
-  if (!fs.existsSync(gitignorePath)) {
-    fs.writeFileSync(gitignorePath, '');
-  }
   const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
   if (!gitignoreContent.includes('.env')) {
     fs.appendFileSync(gitignorePath, '\n.env\n');
@@ -140,19 +137,14 @@ function createMemoryAndAssets(destPath) {
 OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`;
   fs.writeFileSync(envFilePath, envContent);
 
-  // Reset Git repository and push it to GitHub
+  // Initialize Git repo, create the main branch and push
   console.log('🧹 Resetting git repo...');
-  execSync('cd ' + projectPath + ' && git init && git remote add origin git@github.com:fmfg03/' + projectName + '.git', { stdio: 'inherit' });
-  execSync('cd ' + projectPath + ' && git add . && git commit -m "Initial commit with full setup" && git push -u origin main', { stdio: 'inherit' });
-
-  // Ensure the main branch exists
-execSync('cd ' + projectPath + ' && git checkout -b main', { stdio: 'inherit' });
-
-// Add all files and commit
-execSync('cd ' + projectPath + ' && git add . && git commit -m "Initial commit with full setup"', { stdio: 'inherit' });
-
-// Push to GitHub
-execSync('cd ' + projectPath + ' && git push -u origin main', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git init', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git checkout -b main', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git add .', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git commit -m "Initial commit with full setup"', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git remote add origin git@github.com:fmfg03/' + projectName + '.git', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git push -u origin main', { stdio: 'inherit' });
 
   // Start PM2 dev server and llm-router.js
   const launcher = path.join(__dirname, 'auto-launch-dev.js');
