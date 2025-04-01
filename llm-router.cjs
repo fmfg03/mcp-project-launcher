@@ -1,8 +1,12 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
-console.log("🔐 Loaded ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY);
 const fs = require('fs');
 const path = require('path');
+
+// Force-load env BEFORE anything else
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+process.env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim();
+
+console.log("🔐 ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY);
+
 const readline = require('readline');
 const { ChatOpenAI } = require('@langchain/openai');
 const { ChatAnthropic } = require('@langchain/anthropic');
