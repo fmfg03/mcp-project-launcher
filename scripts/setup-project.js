@@ -131,11 +131,19 @@ function createMemoryAndAssets(destPath) {
     fs.appendFileSync(gitignorePath, '\n.env\n');
   }
 
-  // Ensure .env file is created with API keys (this will be ignored by Git)
-  const envFilePath = path.join(projectPath, '.env');
-  const envContent = `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}
-OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`;
-  fs.writeFileSync(envFilePath, envContent);
+// Ensure .gitignore exists and add .env to it
+const gitignorePath = path.join(projectPath, '.gitignore');
+let gitignoreContent = '';
+
+if (fs.existsSync(gitignorePath)) {
+  gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
+} else {
+  fs.writeFileSync(gitignorePath, ''); // Create an empty .gitignore if not present
+}
+
+if (!gitignoreContent.includes('.env')) {
+  fs.appendFileSync(gitignorePath, '\n.env\n');
+}
 
   // Reset Git repository and push it to GitHub
   console.log('🧹 Resetting git repo...');
