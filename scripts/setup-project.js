@@ -181,8 +181,16 @@ OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`;
   console.log('🧹 Resetting git repo...');
   execSync('cd ' + projectPath + ' && git init', { stdio: 'inherit' });
   execSync('cd ' + projectPath + ' && git checkout -b main', { stdio: 'inherit' });
-  execSync('cd ' + projectPath + ' && git add .', { stdio: 'inherit' });
-  execSync('cd ' + projectPath + ' && git commit -m "Initial commit with full setup"', { stdio: 'inherit' });
+
+  // Handle already committed changes
+  const status = execSync('cd ' + projectPath + ' && git status --porcelain', { stdio: 'pipe' }).toString();
+  if (status) {
+    execSync('cd ' + projectPath + ' && git add .', { stdio: 'inherit' });
+    execSync('cd ' + projectPath + ' && git commit -m "Initial commit with full setup"', { stdio: 'inherit' });
+  } else {
+    console.log('No changes to commit.');
+  }
+
   execSync('cd ' + projectPath + ' && git remote add origin git@github.com:fmfg03/' + projectName + '.git', { stdio: 'inherit' });
   execSync('cd ' + projectPath + ' && git push -u origin main', { stdio: 'inherit' });
 
