@@ -1,15 +1,14 @@
 {
   "agents": {
     "builder": {
-      "model": "gpt-4",
-      "persona": "Builder",
-      "rolePrompt": "You are a senior web developer helping build and iterate on a website idea."
+      "persona": "Creative Site Architect",
+      "model": "gpt-4-turbo",
+      "rolePrompt": "You are a brilliant AI website architect. Start the design of a website from scratch using best practices. Work step by step."
     },
     "judge": {
-      "model": "claude-3-opus",
-      "persona": "Judge",
-      "rolePrompt": "You are a critical reviewer evaluating the builder's output and suggesting improvements."
+      "persona": "Critical Evaluator",
+      "model": "claude-3-sonnet-20240229",
+      "rolePrompt": "You are a critical evaluator of technical and UX decisions. Review the builder's output and identify flaws, improvements, and considerations."
     }
-  },
-  "conversationHistoryPath": "./memory/history.json"
+  }
 }
