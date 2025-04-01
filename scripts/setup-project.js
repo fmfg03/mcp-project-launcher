@@ -1,186 +1,95 @@
 const fs = require('fs');
-
 const path = require('path');
-
 const { execSync } = require('child_process');
+const axios = require('axios');
+const GITHUB_USER = 'fmfg03';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const projectName = process.argv[2];  // 'site-007' or whatever project name
+const shouldPushToGitHub = process.argv.includes('--push');
 
-
-const MCP_REPO = 'https://github.com/modelcontextprotocol/servers.git';
-
-const TEMP_FOLDER = 'mcp-servers';
-
-const SRC_PATH = path.join('projects', TEMP_FOLDER, 'src');
-
-
-// === FULL LIST OF SUPPORTED SERVERS ===
-
-// (you can expand or update this list anytime)
-
-const SERVER_MAP = {
-
-  'aws-kb-retrieval-server': 'Retrieval from AWS Knowledge Base',
-
-  'brave-search': 'Web and local search using Brave Search API',
-
-  'everart': 'AI image generation using various models',
-
-  'everything': 'Reference / test server with tools and prompts',
-
-  'fetch': 'Web content fetching and conversion',
-
-  'filesystem': 'Secure file operations',
-
-  'git': 'Git repo read/search tools',
-
-  'github': 'GitHub repo/file API integration',
-
-  'gitlab': 'GitLab project + API integration',
-
-  'gdrive': 'Google Drive file access and search',
-
-  'maps': 'Google Maps API access',
-
-  'memory': 'Persistent memory via knowledge graph',
-
-  'postgresql': 'Read-only Postgres DB access',
-
-  'puppeteer': 'Browser automation and scraping',
-
-  'redis': 'Redis interaction tools',
-
-  'sentry': 'Sentry.io issue retrieval',
-
-  'sequential-thinking': 'Dynamic reflective problem-solving',
-
-  'slack': 'Slack channel + messaging API',
-
-  'sqlite': 'SQLite business intelligence tools',
-
-  'time': 'Time and timezone conversion tools',
-
-  // Add more from README here...
-
-};
-
-
-function listServers() {
-
-  console.log('\nÌ†ΩÌ≥ö Available MCP Servers:\n');
-
-  Object.entries(SERVER_MAP).forEach(([key, desc]) => {
-
-    console.log(`Ì†ΩÌ¥π ${key.padEnd(28)} ‚Äî ${desc}`);
-
-  });
-
-  console.log('\n');
-
-  process.exit(0);
-
-}
-
-
-function abort(msg) {
-
-  console.error(`‚ùå ${msg}`);
-
+if (!projectName) {
+  console.error('‚ùå Project name is required.');
   process.exit(1);
-
 }
 
+// Path for new project
+const projectPath = path.join(__dirname, '..', 'projects', projectName);
 
-// === MAIN ===
+// Function to install dependencies
+function installDependencies() {
+  console.log('üì¶ Installing dependencies...');
+  execSync('npm install', { stdio: 'inherit', cwd: projectPath });
+}
 
-(async () => {
+// Function to push to GitHub and handle force push
+async function pushToGitHub() {
+  console.log('üîß Initializing Git repo...');
+  execSync('git init', { stdio: 'inherit', cwd: projectPath });
+  execSync('git add .', { stdio: 'inherit', cwd: projectPath });
+  execSync('git commit -m "Initial commit from MCP launcher"', { stdio: 'inherit', cwd: projectPath });
 
-  const args = process.argv.slice(2);
+  // Force push to avoid repo conflicts (this will overwrite history)
+  console.log('üöÄ Force pushing to GitHub...');
+  await createGitHubRepo(projectName);
+  const repoUrl = `git@github.com:${GITHUB_USER}/${projectName}.git`;
+  execSync(`git remote add origin ${repoUrl}`, { stdio: 'inherit', cwd: projectPath });
+  execSync('git branch -M main', { stdio: 'inherit', cwd: projectPath });
+  execSync('git push -u origin main --force', { stdio: 'inherit', cwd: projectPath });
 
-  if (args.includes('--list')) return listServers();
+  console.log(`‚úÖ Pushed to GitHub: ${repoUrl}`);
+}
 
+// Function to create a GitHub repo
+async function createGitHubRepo(repoName) {
+  const url = 'https://api.github.com/user/repos';
+  const res = await axios.post(
+    url,
+    { name: repoName, private: false, auto_init: false },
+    { headers: { Authorization: `token ${GITHUB_TOKEN}`, 'User-Agent': GITHUB_USER } }
+  );
 
-  const serverId = args[0];
-
-  const projectName = args[1];
-
-  const push = args.includes('--push');
-
-
-  if (!serverId || !projectName) {
-
-    abort('Usage: node setup-project.js <server-id> <project-name> [--push]\nUse --list to see all server IDs.');
-
+  if (res.status === 201) {
+    console.log('‚úÖ GitHub repo created');
+  } else {
+    throw new Error(`GitHub repo creation failed: ${res.status}`);
   }
+}
 
+// Function to update .gitignore to prevent API key push
+function updateGitIgnore() {
+  const gitignorePath = path.join(projectPath, '.gitignore');
+  const envLine = '.env\n';
 
-  if (!SERVER_MAP[serverId]) {
-
-    abort(`Unknown server ID: ${serverId}\nRun with --list to see valid options.`);
-
+  if (!fs.existsSync(gitignorePath)) {
+    fs.writeFileSync(gitignorePath, envLine);
+  } else {
+    const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
+    if (!gitignoreContent.includes('.env')) {
+      fs.appendFileSync(gitignorePath, envLine);
+    }
   }
+}
 
+async function setupProject() {
+  try {
+    // Step 1: Clone the MCP project (site-007 or custom project)
+    console.log(`‚¨áÔ∏è Cloning MCP repo for ${projectName}...`);
+    execSync(`git clone https://github.com/fmfg03/mcp-project-launcher.git ${projectPath}`, { stdio: 'inherit' });
 
-  const projectsDir = path.join(__dirname, '..', 'projects');
+    // Step 2: Install dependencies and handle any missing files
+    installDependencies();
+    updateGitIgnore();
 
-  const projectPath = path.join(projectsDir, projectName);
+    // Step 3: Force push to GitHub
+    if (shouldPushToGitHub) {
+      await pushToGitHub();
+    }
 
-
-  if (fs.existsSync(projectPath)) {
-
-    abort(`Project folder already exists: ${projectPath}`);
-
+    console.log(`‚úÖ Project "${projectName}" is now set up with dependencies and pushed to GitHub.`);
+  } catch (err) {
+    console.error(`‚ùå Error: ${err.message}`);
+    process.exit(1);
   }
+}
 
-
-  // Clone repo if not already cloned
-
-  const tempPath = path.join(projectsDir, TEMP_FOLDER);
-
-  if (!fs.existsSync(tempPath)) {
-
-    console.log('‚¨áÔ∏è  Cloning MCP servers repo...');
-
-    execSync(`git clone ${MCP_REPO} ${TEMP_FOLDER}`, { cwd: projectsDir, stdio: 'inherit' });
-
-  }
-
-
-  // Check if server folder exists
-
-  const sourcePath = path.join(projectsDir, TEMP_FOLDER, 'src', serverId);
-
-  if (!fs.existsSync(sourcePath)) {
-
-    abort(`Server "${serverId}" not found in src/`);
-
-  }
-
-
-  // Copy server folder into new project
-
-  console.log(`Ì†ΩÌ≥¶ Creating project "${projectName}" using server "${serverId}"...`);
-
-  execSync(`cp -r "${sourcePath}" "${projectPath}"`);
-
-
-  // Cleanup MCP monorepo
-
-  console.log('Ì†æÌ∑π Cleaning up MCP repo...');
-
-  execSync(`rm -rf "${tempPath}"`);
-
-
-  // Launch with auto-launch-dev.js
-
-  console.log('Ì†ΩÌ∫Ä Bootstrapping project...');
-
-  const launchScript = path.join(__dirname, 'auto-launch-dev.js');
-
-  const launchCmd = `node "${launchScript}" "${projectName}" ${push ? '--push' : ''}`;
-
-  execSync(launchCmd, { stdio: 'inherit' });
-
-
-  console.log(`‚úÖ Project "${projectName}" is live.`);
-
-})();
-
+setupProject();
