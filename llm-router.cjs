@@ -1,8 +1,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-
-console.log("🔐 Loaded Anthropic Key:", process.env.ANTHROPIC_API_KEY);
-
+console.log("🔐 Loaded ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY);
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
