@@ -12,7 +12,7 @@ function abort(msg) {
   process.exit(1);
 }
 
-function writeConfigFile(destPath) {
+function writeConfigFile(projectPath) {
   const config = {
     agents: {
       builder: {
@@ -29,15 +29,15 @@ function writeConfigFile(destPath) {
     conversationHistoryPath: './memory/history.json'
   };
 
-  fs.writeFileSync(path.join(destPath, '.mcp.config.json'), JSON.stringify(config, null, 2));
+  fs.writeFileSync(path.join(projectPath, '.mcp.config.json'), JSON.stringify(config, null, 2));
 }
 
-function createMemoryAndAssets(destPath) {
-  const memoryDir = path.join(destPath, 'memory');
+function createMemoryAndAssets(projectPath) {
+  const memoryDir = path.join(projectPath, 'memory');
   fs.mkdirSync(memoryDir, { recursive: true });
   fs.writeFileSync(path.join(memoryDir, 'history.json'), '[]');
 
-  const projectDir = path.join(destPath, 'project');
+  const projectDir = path.join(projectPath, 'project');
   fs.mkdirSync(projectDir, { recursive: true });
 
   fs.writeFileSync(path.join(projectDir, 'index.html'), `<!DOCTYPE html>
@@ -83,7 +83,7 @@ function createMemoryAndAssets(destPath) {
     "exclude": ["node_modules"]
   };
 
-  fs.writeFileSync(path.join(destPath, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
+  fs.writeFileSync(path.join(projectPath, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
 }
 
 (async () => {
@@ -124,19 +124,14 @@ function createMemoryAndAssets(destPath) {
   console.log('🚀 Bootstrapping dev server...');
   execSync(`cd ${projectPath} && npm install`, { stdio: 'inherit' });
 
-// Ensure .gitignore exists, create if it doesn't
-const gitignorePath = path.join(destPath, '.gitignore');
-if (!fs.existsSync(gitignorePath)) {
-  fs.writeFileSync(gitignorePath, '');
-}
+  // Ensure .gitignore exists, create if it doesn't
+  const gitignorePath = path.join(projectPath, '.gitignore');
+  if (!fs.existsSync(gitignorePath)) {
+    fs.writeFileSync(gitignorePath, '');
+  }
 
-// Add .env to .gitignore if it's not already there
-const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
-if (!gitignoreContent.includes('.env')) {
-  fs.appendFileSync(gitignorePath, '\n.env\n');
-}
- 
-  // Add .env to .gitignore to protect API keys
+  // Add .env to .gitignore if it's not already there
+  const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
   if (!gitignoreContent.includes('.env')) {
     fs.appendFileSync(gitignorePath, '\n.env\n');
   }
