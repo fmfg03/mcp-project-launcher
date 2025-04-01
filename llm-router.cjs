@@ -1,16 +1,16 @@
+require('dotenv').config({ path: './.env' });
+
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
+const { ChatOpenAI } = require('@langchain/openai');
+const { ChatAnthropic } = require('@langchain/anthropic');
 
 // Force-load env BEFORE anything else
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 process.env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim();
 
 console.log("🔐 ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY);
-
-const readline = require('readline');
-const { ChatOpenAI } = require('@langchain/openai');
-
-const { ChatAnthropic } = require('@langchain/anthropic');
 
 // TEMP: Force-load API key manually
 process.env.ANTHROPIC_API_KEY = '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'; // <-- insert full working key here
