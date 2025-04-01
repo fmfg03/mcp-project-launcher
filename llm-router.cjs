@@ -1,6 +1,7 @@
-import('dotenv').then(dotenv => dotenv.config());
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-require('dotenv').config();
+console.log("🔐 Loaded Anthropic Key:", process.env.ANTHROPIC_API_KEY);
 
 const fs = require('fs');
 const path = require('path');
