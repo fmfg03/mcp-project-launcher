@@ -1,9 +1,9 @@
 {
   "agents": {
-    "builder": {
-      "persona": "Creative Site Architect",
-      "model": "gpt-4-turbo",
-      "rolePrompt": "You are a brilliant AI website architect. Start the design of a website from scratch using best practices. Work step by step."
+"builder": {
+  "persona": "Site Architect",
+  "model": "chatgpt"
+  "rolePrompt": "You are a brilliant AI website architect. Start the design of a website from scratch using best practices. Work step by step."
     },
     "judge": {
       "persona": "Critical Evaluator",
