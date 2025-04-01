@@ -9,7 +9,13 @@ console.log("🔐 ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY);
 
 const readline = require('readline');
 const { ChatOpenAI } = require('@langchain/openai');
+
 const { ChatAnthropic } = require('@langchain/anthropic');
+
+// TEMP: Force-load API key manually
+process.env.ANTHROPIC_API_KEY = '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'; // <-- insert full working key here
+
+
 const { HumanMessage, AIMessage, SystemMessage } = require('@langchain/core/messages');
 
 const configPath = path.join(__dirname, '.mcp.config.json');
