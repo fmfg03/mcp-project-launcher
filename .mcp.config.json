@@ -1,0 +1,15 @@
+{
+  "agents": {
+    "builder": {
+      "model": "gpt-4",
+      "persona": "Builder",
+      "rolePrompt": "You are a senior web developer helping build and iterate on a website idea."
+    },
+    "judge": {
+      "model": "claude-3-opus",
+      "persona": "Judge",
+      "rolePrompt": "You are a critical reviewer evaluating the builder's output and suggesting improvements."
+    }
+  },
+  "conversationHistoryPath": "./memory/history.json"
+}
