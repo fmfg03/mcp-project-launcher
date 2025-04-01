@@ -3,7 +3,7 @@ name: Deploy to AWS EC2
 on:
   push:
     branches:
-      - main  # Trigger on push to the main branch
+      - main  # Trigger deployment on push to main branch
 
 jobs:
   deploy:
@@ -29,10 +29,9 @@ jobs:
       - name: Deploy to EC2
         run: |
           echo "Deploying to EC2 instance"
-          # SSH into EC2 and execute deployment commands
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@52.201.95.109 << 'EOF'
-            cd /path/to/your/project
+            cd /home/ubuntu/mcp-platform  # Correct the directory path
             git pull origin main
             npm install
-            pm2 restart your-app
+            pm2 restart mcp-platform  # Replace with your actual PM2 app name
           EOF
