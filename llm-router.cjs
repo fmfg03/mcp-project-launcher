@@ -1,3 +1,5 @@
+import('dotenv').then(dotenv => dotenv.config());
+
 require('dotenv').config();
 
 const fs = require('fs');
