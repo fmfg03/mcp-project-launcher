@@ -1,95 +1,151 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const axios = require('axios');
-const GITHUB_USER = 'fmfg03';
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const projectName = process.argv[2];  // 'site-007' or whatever project name
-const shouldPushToGitHub = process.argv.includes('--push');
 
-if (!projectName) {
-  console.error('❌ Project name is required.');
+const MCP_REPO = 'https://github.com/modelcontextprotocol/servers.git';
+const MCP_FOLDER_NAME = 'mcp-servers';
+const SERVER_FOLDER = 'everything'; // locked-in default
+const projectsDir = path.join(__dirname, '..', 'projects');
+
+function abort(msg) {
+  console.error(`❌ ${msg}`);
   process.exit(1);
 }
 
-// Path for new project
-const projectPath = path.join(__dirname, '..', 'projects', projectName);
+function writeConfigFile(destPath) {
+  const config = {
+    agents: {
+      builder: {
+        model: 'gpt-4',
+        persona: 'Builder',
+        rolePrompt: 'You are a senior web developer helping build and iterate on a website idea.'
+      },
+      judge: {
+        model: 'claude-3-sonnet',
+        persona: 'Judge',
+        rolePrompt: 'You are a critical reviewer evaluating the builder’s output and suggesting improvements.'
+      }
+    },
+    conversationHistoryPath: './memory/history.json'
+  };
 
-// Function to install dependencies
-function installDependencies() {
-  console.log('📦 Installing dependencies...');
-  execSync('npm install', { stdio: 'inherit', cwd: projectPath });
+  fs.writeFileSync(path.join(destPath, '.mcp.config.json'), JSON.stringify(config, null, 2));
 }
 
-// Function to push to GitHub and handle force push
-async function pushToGitHub() {
-  console.log('🔧 Initializing Git repo...');
-  execSync('git init', { stdio: 'inherit', cwd: projectPath });
-  execSync('git add .', { stdio: 'inherit', cwd: projectPath });
-  execSync('git commit -m "Initial commit from MCP launcher"', { stdio: 'inherit', cwd: projectPath });
+function createMemoryAndAssets(destPath) {
+  const memoryDir = path.join(destPath, 'memory');
+  fs.mkdirSync(memoryDir, { recursive: true });
+  fs.writeFileSync(path.join(memoryDir, 'history.json'), '[]');
 
-  // Force push to avoid repo conflicts (this will overwrite history)
-  console.log('🚀 Force pushing to GitHub...');
-  await createGitHubRepo(projectName);
-  const repoUrl = `git@github.com:${GITHUB_USER}/${projectName}.git`;
-  execSync(`git remote add origin ${repoUrl}`, { stdio: 'inherit', cwd: projectPath });
-  execSync('git branch -M main', { stdio: 'inherit', cwd: projectPath });
-  execSync('git push -u origin main --force', { stdio: 'inherit', cwd: projectPath });
+  const projectDir = path.join(destPath, 'project');
+  fs.mkdirSync(projectDir, { recursive: true });
 
-  console.log(`✅ Pushed to GitHub: ${repoUrl}`);
+  fs.writeFileSync(path.join(projectDir, 'index.html'), `<!DOCTYPE html>
+<html>
+<head>
+  <title>My MCP Site</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Welcome to your new site</h1>
+  <script src="script.js"></script>
+</body>
+</html>`);
+
+  fs.writeFileSync(path.join(projectDir, 'styles.css'), `body {
+  font-family: sans-serif;
+  background: #f5f5f5;
+  padding: 2rem;
+}`);
+
+  fs.writeFileSync(path.join(projectDir, 'script.js'), `console.log("Hello from your MCP site!");`);
+
+  fs.writeFileSync(path.join(projectDir, 'content.md'), `# Content Plan
+
+- Homepage
+- About section
+- Contact form
+`);
+
+  const tsconfig = {
+    "compilerOptions": {
+      "target": "ES2017",
+      "module": "CommonJS",
+      "moduleResolution": "Node",
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+      "skipLibCheck": true,
+      "downlevelIteration": true,
+      "outDir": "dist"
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
+  };
+
+  fs.writeFileSync(path.join(destPath, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
 }
 
-// Function to create a GitHub repo
-async function createGitHubRepo(repoName) {
-  const url = 'https://api.github.com/user/repos';
-  const res = await axios.post(
-    url,
-    { name: repoName, private: false, auto_init: false },
-    { headers: { Authorization: `token ${GITHUB_TOKEN}`, 'User-Agent': GITHUB_USER } }
-  );
+(async () => {
+  const args = process.argv.slice(2);
+  const projectName = args.find(arg => !arg.startsWith('--'));
+  const push = args.includes('--push');
 
-  if (res.status === 201) {
-    console.log('✅ GitHub repo created');
-  } else {
-    throw new Error(`GitHub repo creation failed: ${res.status}`);
+  if (!projectName) {
+    abort('Missing project name.\nUsage: node setup-project.js site-006 --push');
   }
-}
 
-// Function to update .gitignore to prevent API key push
-function updateGitIgnore() {
+  const projectPath = path.join(projectsDir, projectName);
+  if (fs.existsSync(projectPath)) {
+    abort(`Project folder already exists: ${projectPath}`);
+  }
+
+  const tempPath = path.join(projectsDir, MCP_FOLDER_NAME);
+  if (!fs.existsSync(tempPath)) {
+    console.log('⬇️  Cloning MCP servers repo...');
+    execSync(`git clone ${MCP_REPO} ${MCP_FOLDER_NAME}`, { cwd: projectsDir, stdio: 'inherit' });
+  }
+
+  const sourcePath = path.join(tempPath, 'src', SERVER_FOLDER);
+  if (!fs.existsSync(sourcePath)) {
+    abort(`Server folder not found: ${sourcePath}`);
+  }
+
+  console.log(`📦 Setting up project "${projectName}" from "${SERVER_FOLDER}" server...`);
+  execSync(`cp -r "${sourcePath}" "${projectPath}"`);
+
+  console.log('🧠 Writing config + memory...');
+  writeConfigFile(projectPath);
+  createMemoryAndAssets(projectPath);
+
+  console.log('🧹 Cleaning up cloned MCP repo...');
+  execSync(`rm -rf "${tempPath}"`);
+
+  console.log('🚀 Bootstrapping dev server...');
+  execSync(`cd ${projectPath} && npm install`, { stdio: 'inherit' });
+
+  // Add .env to .gitignore to protect API keys
   const gitignorePath = path.join(projectPath, '.gitignore');
-  const envLine = '.env\n';
-
-  if (!fs.existsSync(gitignorePath)) {
-    fs.writeFileSync(gitignorePath, envLine);
-  } else {
-    const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
-    if (!gitignoreContent.includes('.env')) {
-      fs.appendFileSync(gitignorePath, envLine);
-    }
+  const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
+  if (!gitignoreContent.includes('.env')) {
+    fs.appendFileSync(gitignorePath, '\n.env\n');
   }
-}
 
-async function setupProject() {
-  try {
-    // Step 1: Clone the MCP project (site-007 or custom project)
-    console.log(`⬇️ Cloning MCP repo for ${projectName}...`);
-    execSync(`git clone https://github.com/fmfg03/mcp-project-launcher.git ${projectPath}`, { stdio: 'inherit' });
+  // Ensure .env file is created with API keys (this will be ignored by Git)
+  const envFilePath = path.join(projectPath, '.env');
+  const envContent = `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY}
+OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`;
+  fs.writeFileSync(envFilePath, envContent);
 
-    // Step 2: Install dependencies and handle any missing files
-    installDependencies();
-    updateGitIgnore();
+  // Reset Git repository and push it to GitHub
+  console.log('🧹 Resetting git repo...');
+  execSync('cd ' + projectPath + ' && git init && git remote add origin git@github.com:fmfg03/' + projectName + '.git', { stdio: 'inherit' });
+  execSync('cd ' + projectPath + ' && git add . && git commit -m "Initial commit with full setup" && git push -u origin main', { stdio: 'inherit' });
 
-    // Step 3: Force push to GitHub
-    if (shouldPushToGitHub) {
-      await pushToGitHub();
-    }
+  // Start PM2 dev server and llm-router.js
+  const launcher = path.join(__dirname, 'auto-launch-dev.js');
+  const cmd = `node "${launcher}" "${projectName}" ${push ? '--push' : ''}`;
+  execSync(cmd, { stdio: 'inherit' });
 
-    console.log(`✅ Project "${projectName}" is now set up with dependencies and pushed to GitHub.`);
-  } catch (err) {
-    console.error(`❌ Error: ${err.message}`);
-    process.exit(1);
-  }
-}
-
-setupProject();
+  console.log(`✅ Project "${projectName}" is live.`);
+})();
