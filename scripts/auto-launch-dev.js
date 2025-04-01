@@ -81,6 +81,11 @@ async function createGitHubRepo(repoName) {
     console.log('🚀 Starting dev server with PM2...');
     execSync(`pm2 start npm --name ${projectName} -- run dev`, { stdio: 'inherit' });
 
+    // Step 2.5: Launch llm-router via PM2
+console.log('🧠 Starting LLM router...');
+execSync(`pm2 start node --name ${projectName}-router -- llm-router.js`, { stdio: 'inherit' });
+
+
     // Step 3: Optionally push to GitHub
     if (shouldPushToGitHub) {
       const repoUrl = `git@github.com:${GITHUB_USER}/${projectName}.git`;
