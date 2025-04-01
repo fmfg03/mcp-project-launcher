@@ -124,6 +124,18 @@ function createMemoryAndAssets(destPath) {
   console.log('🚀 Bootstrapping dev server...');
   execSync(`cd ${projectPath} && npm install`, { stdio: 'inherit' });
 
+// Ensure .gitignore exists, create if it doesn't
+const gitignorePath = path.join(destPath, '.gitignore');
+if (!fs.existsSync(gitignorePath)) {
+  fs.writeFileSync(gitignorePath, '');
+}
+
+// Add .env to .gitignore if it's not already there
+const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
+if (!gitignoreContent.includes('.env')) {
+  fs.appendFileSync(gitignorePath, '\n.env\n');
+}
+ 
   // Add .env to .gitignore to protect API keys
   const gitignorePath = path.join(projectPath, '.gitignore');
   const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
