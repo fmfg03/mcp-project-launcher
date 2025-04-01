@@ -137,8 +137,6 @@ if (!gitignoreContent.includes('.env')) {
 }
  
   // Add .env to .gitignore to protect API keys
-  const gitignorePath = path.join(projectPath, '.gitignore');
-  const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
   if (!gitignoreContent.includes('.env')) {
     fs.appendFileSync(gitignorePath, '\n.env\n');
   }
