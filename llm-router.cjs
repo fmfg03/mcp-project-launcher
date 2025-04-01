@@ -1,4 +1,8 @@
-require('dotenv').config({ path: './.env' });
+require('dotenv').config();
+
+console.log('Anthropic API Key:', process.env.ANTHROPIC_API_KEY);
+console.log('OpenAI API Key:', process.env.OPENAI_API_KEY);
+
 
 const fs = require('fs');
 const path = require('path');
