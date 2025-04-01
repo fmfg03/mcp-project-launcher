@@ -1,4 +1,6 @@
-require('dotenv').config();
+require('dotenv').config({ path: '/home/ubuntu/mcp-platform/projects/site-007/.env' });
+
+console.log('Environment loaded:', process.env);
 
 console.log('Anthropic API Key:', process.env.ANTHROPIC_API_KEY);
 console.log('OpenAI API Key:', process.env.OPENAI_API_KEY);
