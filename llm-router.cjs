@@ -24,7 +24,7 @@ const rl = readline.createInterface({
 });
 
 const agents = {
-  'gpt-4': new ChatOpenAI({ modelName: 'gpt-4', temperature: 0 }),
+  'o3-mini': new ChatOpenAI({ modelName: 'o3-mini-2025-01-31', temperature: 0 }),
   'claude-3-sonnet': new ChatAnthropic({ modelName: 'claude-3-sonnet-20240229', temperature: 0.3 })
 };
 
